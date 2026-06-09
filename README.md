@@ -1,20 +1,19 @@
 # RAG System Overview
 
-A Retrieval-Augmented Generation (RAG) pipeline with hybrid search, multi-query expansion, reciprocal rank fusion, and cross-encoder reranking. No separate ingestion step — documents are loaded, chunked, and indexed in memory every time you run a query.
+A Retrieval-Augmented Generation (RAG) pipeline with hybrid search, multi-query expansion, reciprocal rank fusion, and cross-encoder reranking.
 
 ## Architecture
 
 ```mermaid
 flowchart TB
-    subgraph startup [Startup — runs once per process]
+    subgraph ingest [Ingest — run once]
         A[Document Loading] --> B[Chunking]
-        B --> C[Embed all chunks once]
-        C --> D1[Chroma in-memory vector store]
-        C --> D2[BM25 in-memory index]
-        D1 & D2 --> E[EnsembleRetriever 0.7 / 0.3]
+        B --> C[Embed all chunks]
+        C --> D1[Save Chroma to disk]
+        C --> D2[Save BM25 to disk]
     end
 
-    subgraph query [Per Query]
+    subgraph query [Query — run every time]
         Q[User Query] --> F[Multi-Query Expansion + HyDE]
         F --> G[Ensemble Retrieval per query]
         G --> H[Cross-Query RRF Fusion]
@@ -23,7 +22,7 @@ flowchart TB
         J --> K[LLM Answer Generation]
     end
 
-    E --> G
+    D1 & D2 --> G
 ```
 
 ## Quick Start
@@ -47,38 +46,44 @@ cp .env.example .env
 
 Place PDF, `.txt`, or `.md` files in `data/documents/`.
 
-### 4. Query
+### 4. Ingest
+
+Run once whenever you add or change documents:
+
+```bash
+python -m scripts.ingest
+```
+
+### 5. Query
 
 ```bash
 # Single question
-python scripts/query.py "What is reciprocal rank fusion?"
+python -m scripts.query "What are the seven areas regulated by data privacy laws?"
 
 # With sources
-python scripts/query.py "How does the retrieval pipeline work?" --sources
+python -m scripts.query "How does the retrieval pipeline work?" --sources
 
 # Interactive mode
-python scripts/query.py -i
+python -m scripts.query -i
 ```
-
-That's it. No separate ingest step. On startup the pipeline loads your documents, chunks them, embeds all chunks once, and builds the retrievers — then answers your question.
 
 ## Pipeline Details
 
-### Startup (runs once, inside `RAGPipeline.__init__`)
+### Ingest (run once, saves index to `.index/`)
 
 | Step | Module | Description |
 |------|--------|-------------|
 | 1 | `src/ingestion/loader.py` | Loads PDF, text, and markdown files from `data/documents/` |
 | 2 | `src/ingestion/chunker.py` | `RecursiveCharacterTextSplitter` splits docs into chunks |
-| 3 | `src/ingestion/embedder.py` | HuggingFace sentence-transformer embeds all chunks once |
-| 4 | `src/rag.py` | Chroma vector store + BM25 retriever built in memory, wrapped in `EnsembleRetriever` |
+| 3 | `src/ingestion/embedder.py` | HuggingFace sentence-transformer embeds all chunks |
+| 4 | `src/rag.py` → `ingest()` | Saves Chroma vector store to `.index/chroma/` and BM25 to `.index/bm25.pkl` |
 
-### Per Query (inside `RAGPipeline.query`)
+### Query (loads index from disk, fast startup)
 
 | Stage | Module | Description |
 |-------|--------|-------------|
 | 1 | `src/retrieval/query_expansion.py` | Ollama generates N query rephrasings + one HyDE hypothetical document |
-| 2 | `src/rag.py` | `EnsembleRetriever.invoke()` per expanded query (vector 0.7 + BM25 0.3) |
+| 2 | `src/rag.py` | Loads Chroma + BM25 from disk, `EnsembleRetriever.invoke()` per expanded query (vector 0.7 + BM25 0.3) |
 | 3 | `src/retrieval/rrf.py` | Cross-query RRF fusion merges all per-query ranked lists into one |
 | 4 | `src/retrieval/dedup.py` | Drops near-duplicate chunks (cosine similarity >= 0.95) |
 | 5 | `src/retrieval/reranker.py` | Cohere cross-encoder reranks candidates against original query |
@@ -123,14 +128,16 @@ RAG-Project/
 │   │   └── llm.py              # Ollama answer generation with citations
 │   ├── config.py               # Settings loaded from .env
 │   ├── models.py               # Shared dataclasses (DocumentChunk)
-│   └── rag.py                  # End-to-end pipeline — startup + query
+│   └── rag.py                  # ingest() + RAGPipeline class
 ├── scripts/
-│   └── query.py                # CLI entrypoint
-└── data/documents/             # Place your source documents here
+│   ├── ingest.py               # CLI: build and save the index
+│   └── query.py                # CLI: ask questions
+├── data/documents/             # Place your source documents here
+└── .index/                     # Saved index (gitignored) — created by ingest
 ```
 
 ## Notes
 
-- **No persistent index.** Vectors and BM25 index live in memory for the duration of the process. Startup time scales with the number and size of your documents.
+- **Re-run ingest whenever documents change.** The saved index is not updated automatically.
 - **Ollama must be running locally** (or set `OLLAMA_URL` for a remote instance) before running any queries.
 - **Cohere API key is required** for reranking. Without it the pipeline will error at Stage 5.
