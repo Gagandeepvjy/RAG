@@ -1,12 +1,12 @@
-"""End-to-end RAG pipeline — notebook style.
+"""End-to-end RAG pipeline.
 
-No persistence. On every startup:
-  1. Load documents from disk
-  2. Chunk them
-  3. Build Chroma (in-memory) + BM25 retriever
-  4. Wrap in EnsembleRetriever
-Then answer queries against that.
+Two modes:
+  - Build mode (scripts/ingest.py): load docs -> chunk -> embed -> save to disk
+  - Query mode (scripts/query.py): load from disk -> retrieve -> generate
 """
+
+from pathlib import Path
+import pickle
 
 from langchain_chroma import Chroma
 from langchain_community.retrievers import BM25Retriever
@@ -24,40 +24,70 @@ from src.retrieval.dedup import deduplicate
 from src.generation.llm import AnswerGenerator
 
 
+BM25_PATH = Path(settings.index_dir) / "bm25.pkl"
+CHROMA_PATH = Path(settings.index_dir) / "chroma"
+
+
+def ingest(documents_dir=None):
+    """Load documents, chunk, embed, and save index to disk."""
+    source = documents_dir or settings.documents_dir
+    index_dir = Path(settings.index_dir)
+    index_dir.mkdir(parents=True, exist_ok=True)
+
+    print("Loading documents...")
+    raw_docs = load_documents(source)
+
+    print("Chunking...")
+    chunks: list[Document] = chunk_documents(raw_docs)
+    print(f"  {len(chunks)} chunks from {len(raw_docs)} documents")
+
+    embedder = get_embedder()
+
+    print("Building and saving vector store...")
+    Chroma.from_documents(
+        documents=chunks,
+        embedding=embedder,
+        persist_directory=str(CHROMA_PATH),
+        collection_metadata={"hnsw:space": "cosine"},
+    )
+
+    print("Building and saving BM25 index...")
+    bm25 = BM25Retriever.from_documents(chunks)
+    bm25.k = settings.retrieval_top_k
+    with open(BM25_PATH, "wb") as f:
+        pickle.dump(bm25, f)
+
+    print(f"Done. Index saved to {index_dir}/")
+
+
 class RAGPipeline:
-    """Loads documents, builds retrievers, answers queries. No disk index."""
+    """Loads saved index from disk and answers queries."""
 
-    def __init__(self, documents_dir=None):
-        source = documents_dir or settings.documents_dir
+    def __init__(self):
+        if not CHROMA_PATH.exists() or not BM25_PATH.exists():
+            raise FileNotFoundError(
+                "No index found. Run `python scripts/ingest.py` first."
+            )
 
-        print("Loading documents...")
-        raw_docs = load_documents(source)
-
-        print("Chunking...")
-        chunks: list[Document] = chunk_documents(raw_docs)
-        print(f"  {len(chunks)} chunks from {len(raw_docs)} documents")
-
-        print("Building vector store...")
+        print("Loading index from disk...")
         embedder = get_embedder()
-        vectorstore = Chroma.from_documents(
-            documents=chunks,
-            embedding=embedder,
-            collection_metadata={"hnsw:space": "cosine"},
+
+        vectorstore = Chroma(
+            persist_directory=str(CHROMA_PATH),
+            embedding_function=embedder,
         )
         vector_retriever = vectorstore.as_retriever(
             search_type="similarity",
             search_kwargs={"k": settings.retrieval_top_k},
         )
 
-        print("Building BM25 index...")
-        bm25_retriever = BM25Retriever.from_documents(chunks)
-        bm25_retriever.k = settings.retrieval_top_k
+        with open(BM25_PATH, "rb") as f:
+            bm25_retriever = pickle.load(f)
 
         self.hybrid_retriever = EnsembleRetriever(
             retrievers=[vector_retriever, bm25_retriever],
             weights=[settings.vector_weight, settings.bm25_weight],
         )
-        self.chunks = chunks
         self.embedder = embedder
         self.expander = QueryExpander()
         self.reranker = Reranker()
@@ -65,15 +95,12 @@ class RAGPipeline:
         print("Ready.\n")
 
     def query(self, question: str) -> dict:
-        """Retrieve + generate."""
-
         # 1 — query expansion + HyDE
         queries = self.expander.expand(question)
         print(f"  Expanded to {len(queries)} queries")
 
         # 2 — ensemble retrieval per query
-        # build a stable key per doc: source + first 60 chars of content
-        all_docs: dict[str, Document] = {}   # key → doc (first seen wins)
+        all_docs: dict[str, Document] = {}
         per_query_ranked: list[list[str]] = []
 
         for q in queries:
