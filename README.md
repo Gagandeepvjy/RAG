@@ -38,8 +38,7 @@ pip install -r requirements.txt
 ### 2. Configure environment
 
 ```bash
-cp .env.example .env
-# Edit .env — set your Cohere API key and ensure Ollama is running locally
+# Edit .env — set your Cohere API key, Hugging Face token, and ensure Ollama is running locally
 ```
 
 ### 3. Add documents
@@ -51,20 +50,20 @@ Place PDF, `.txt`, or `.md` files in `data/documents/`.
 Run once whenever you add or change documents:
 
 ```bash
-python -m scripts.ingest
+python scripts/ingest.py
 ```
 
 ### 5. Query
 
 ```bash
 # Single question
-python -m scripts.query "What are the seven areas regulated by data privacy laws?"
+python scripts/query.py "What are the seven areas regulated by data privacy laws?"
 
 # With sources
-python -m scripts.query "How does the retrieval pipeline work?" --sources
+python scripts/query.py "How does the retrieval pipeline work?" --sources
 
 # Interactive mode
-python -m scripts.query -i
+python scripts/query.py -i
 ```
 
 ## Pipeline Details
@@ -91,21 +90,22 @@ python -m scripts.query -i
 
 ## Configuration
 
-All settings are in `.env` (see `.env.example`):
+All settings are in `.env`:
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `OLLAMA_URL` | | Optional remote Ollama server URL (leave blank for local) |
-| `OLLAMA_CHAT_MODEL` | qwen3:8b | Model used for answer generation |
-| `OLLAMA_EXPANSION_MODEL` | qwen3:8b | Model used for query expansion and HyDE |
+| `HUGGINGFACEHUB_API_TOKEN` | | Optional Hugging Face token for model downloads |
 | `HF_EMBEDDING_MODEL` | BAAI/bge-large-en-v1.5 | HuggingFace model used for embeddings |
 | `COHERE_API_KEY` | | Required for reranking |
 | `COHERE_RERANK_MODEL` | rerank-english-v3.0 | Cohere reranking model |
+| `OLLAMA_URL` | | Optional remote Ollama server URL (leave blank for local) |
+| `OLLAMA_CHAT_MODEL` | qwen3:8b | Model used for answer generation |
+| `OLLAMA_EXPANSION_MODEL` | qwen3:8b | Model used for query expansion and HyDE |
 | `CHUNK_SIZE` | 1024 | Characters per chunk |
 | `CHUNK_OVERLAP` | 128 | Overlap between adjacent chunks |
 | `NUM_QUERY_EXPANSIONS` | 3 | Number of alternative queries to generate |
 | `RETRIEVAL_TOP_K` | 20 | Candidates returned per retriever per query |
-| `RERANK_TOP_K` | 15 | Final chunks passed to the LLM |
+| `RERANK_TOP_K` | 10 | Final chunks passed to the LLM |
 | `RRF_K` | 60 | RRF smoothing constant |
 | `VECTOR_WEIGHT` | 0.7 | Weight for dense vector retrieval |
 | `BM25_WEIGHT` | 0.3 | Weight for BM25 sparse retrieval |
