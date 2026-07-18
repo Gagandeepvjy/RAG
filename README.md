@@ -66,6 +66,18 @@ python scripts/query.py "How does the retrieval pipeline work?" --sources
 python scripts/query.py -i
 ```
 
+### 6. Evaluate
+
+```bash
+python scripts/evaluate.py --qa-file data/eval_qa.json --output eval_results.json
+```
+
+The evaluation script reads a JSON array from `data/eval_qa.json` containing objects with:
+- `question`: the test question to ask the RAG pipeline
+- `ground_truth`: the expected or reference answer for scoring
+
+A starter template is already included at `data/eval_qa.json`. Update it with QA pairs grounded in your `data/documents/` content before running evaluation.
+
 ## Pipeline Details
 
 ### Ingest (run once, saves index to `.index/`)
@@ -131,7 +143,8 @@ RAG-Project/
 │   └── rag.py                  # ingest() + RAGPipeline class
 ├── scripts/
 │   ├── ingest.py               # CLI: build and save the index
-│   └── query.py                # CLI: ask questions
+│   ├── query.py                # CLI: ask questions
+│   └── evaluate.py             # CLI: score the pipeline via RAGAS evaluation
 ├── data/documents/             # Place your source documents here
 └── .index/                     # Saved index (gitignored) — created by ingest
 ```
