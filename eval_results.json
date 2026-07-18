@@ -1,0 +1,47 @@
+[
+  {
+    "question": "What should a Googler do if they have a question or concern about a possible violation of the Code of Conduct?",
+    "answer": "A Googler should contact their manager, Human Resources representative, or Ethics & Business Integrity directly [1]. They can also submit a question or concern through the Alphabet Helpline [1]. For misconduct concerns about the CEO, a direct report to the CEO, or a Senior Vice President, the Audit Committee of Alphabet\u2019s Board of Directors should be notified [1]. If unsure, they should ask questions of their manager, Legal, or Ethics & Business Integrity [4].",
+    "ground_truth": "Employees should raise questions or concerns by contacting their manager, Human Resources, or Ethics & Business Integrity. They can also report suspected violations through the Alphabet Helpline. If the concern involves the CEO, a direct report to the CEO, or a Senior Vice President, they may notify the Audit Committee of Alphabet's Board of Directors. Google prohibits retaliation against anyone who reports concerns or participates in an investigation in good faith.",
+    "faithfulness": 0.0,
+    "answer_relevancy": 0.7385232975797454,
+    "context_precision": 0.0,
+    "context_recall": 0.5
+  },
+  {
+    "question": "How does Google define a conflict of interest?",
+    "answer": "The provided documents do not contain enough information to answer this question.",
+    "ground_truth": "A conflict of interest exists when competing loyalties could cause an employee to pursue a personal benefit for themselves, their friends, or their family at the expense of Google or its users. Employees should avoid both actual conflicts and situations that reasonably create the appearance of a conflict. If a potential conflict exists, employees should review the situation with their manager and Ethics & Business Integrity.",
+    "faithfulness": 1.0,
+    "answer_relevancy": 0.1877369766129544,
+    "context_precision": 0.99999999995,
+    "context_recall": 0.6666666666666666
+  },
+  {
+    "question": "What is Google's policy on accepting gifts, entertainment, or business courtesies?",
+    "answer": "Google\u2019s policy states that accepting gifts, entertainment, or business courtesies from competitors or partners may create a conflict of interest, especially if significant [1]. Inexpensive non-cash gifts and occasional meals or events with clients are generally permissible if not excessive or impropriety-inducing [2]. Employees must consult the Non-Government Related Gifts & Client Entertainment Policy and seek manager approval when needed [2]. For government officials, such courtesies are restricted to avoid bribery perceptions, with strict legal guidelines applying [4].",
+    "ground_truth": "Employees may generally accept inexpensive token non-cash gifts and infrequent, moderate business meals or entertainment that do not create the appearance of impropriety. Before accepting gifts or business courtesies, employees should consult Google's Non-Government Related Gifts & Client Entertainment Policy and may need manager approval. Questions should be directed to Ethics & Business Integrity.",
+    "faithfulness": 0.75,
+    "answer_relevancy": 0.8519897960047361,
+    "context_precision": 0.9999999999666667,
+    "context_recall": 0.3333333333333333
+  },
+  {
+    "question": "What responsibilities do employees have for protecting confidential information?",
+    "answer": "Employees must properly secure, label, and dispose of Confidential Google material [1], safeguard information received under non-disclosure agreements [1], and protect trade secrets and confidential intellectual property [1]. They must also limit disclosure of \"Need to Know\" or \"Confidential\" information to an \"only as needed\" basis under NDAs and conduct prior security assessments for external recipients [3]. In gray areas, employees should seek guidance from Ethics & Business Integrity and avoid sharing non-public tips or inadvertently revealing confidential information through communications or media [2].",
+    "ground_truth": "Employees must properly secure, label, and dispose of confidential information, safeguard confidential information received under non-disclosure agreements, and protect Google's trade secrets and intellectual property. Confidential information should only be disclosed on a need-to-know basis under appropriate non-disclosure agreements, and employees should avoid sharing confidential information with unauthorized individuals, including friends, family members, competitors, or on social media.",
+    "faithfulness": 0.6666666666666666,
+    "answer_relevancy": 0.8418736004175097,
+    "context_precision": 0.0,
+    "context_recall": 0.8
+  },
+  {
+    "question": "What is Google's stance on bribery and corruption?",
+    "answer": "Google strictly prohibits bribery in all circumstances, emphasizing a simple rule: \"don\u2019t bribe anybody, anytime, for any reason\" [1]. It adheres to U.S. and international anti-bribery laws, requiring employees to consult its Anti-Bribery and Government Ethics Policy and obtain pre-approvals before offering gifts or business courtesies to government officials [2]. The company also limits permissible expenses related to promoting products, ensuring compliance with local laws and internal guidelines [3].",
+    "ground_truth": "Google prohibits bribery in all forms. Employees must never offer, give, solicit, or accept bribes or anything of value to improperly influence business decisions or obtain an improper advantage. Employees must comply with anti-bribery laws, including the U.S. Foreign Corrupt Practices Act and the UK Bribery Act, and consult Google's Anti-Bribery and Government Ethics Policy before providing gifts or business courtesies, especially to government officials.",
+    "faithfulness": 0.3333333333333333,
+    "answer_relevancy": 0.840235182033875,
+    "context_precision": 0.0,
+    "context_recall": 1.0
+  }
+]

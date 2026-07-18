@@ -19,6 +19,7 @@ rank-bm25>=0.2.2
 
 # Ensemble retriever
 langchain>=0.2.0
+langchain-community==0.3.31
 
 # Reranking (Cohere)
 langchain-cohere>=0.1.0
@@ -27,9 +28,10 @@ cohere>=5.0.0
 # LLM
 ollama>=0.6.2
 
-# Evaluation
-ragas>=0.1.0
-datasets>=2.0.0
+# Evaluation — uses the modern ragas>=0.4 "collections" metrics API
+# (the old Dataset.from_dict / functional-metric API was removed)
+ragas>=0.4.0
+openai>=1.0.0
 
 # Config & CLI
 python-dotenv>=1.0.0
